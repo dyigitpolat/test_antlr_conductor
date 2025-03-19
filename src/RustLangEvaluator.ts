@@ -2,13 +2,17 @@ import { BasicEvaluator } from "conductor/dist/conductor/runner";
 import { IRunnerPlugin } from "conductor/dist/conductor/runner/types";
 import { CharStream, CommonTokenStream, AbstractParseTreeVisitor } from 'antlr4ng';
 import { RustLexer } from './parser/src/RustLexer'
-import { ExpressionContext, ProgramContext, RustParser } from './parser/src/RustParser';
+import { ExpressionContext, ProgramContext, RustParser, StatementContext } from './parser/src/RustParser';
 import { RustVisitor } from './parser/src/RustVisitor';
 
 class RustEvaluatorVisitor extends AbstractParseTreeVisitor<number> implements RustVisitor<number> {
     // Visit a parse tree produced by SimpleLangParser#prog
     visitProg(ctx: ProgramContext): number {
         return this.visit(ctx.statement(0));
+    }
+
+    visitStatement(ctx: StatementContext) {
+        return this.visit(ctx.expression());
     }
 
     // Visit a parse tree produced by SimpleLangParser#expression
