@@ -151,4 +151,3 @@ run yarn build. if there are no problems, a file dist/index.js will be generated
 this repository has been configured to automatically build your runner and deploy it to github pages upon pushing to the main branch on github. you should be able to find it at https://{your-username}.github.io/{your-repository}/index.js.
 
 enjoy!
-Test
