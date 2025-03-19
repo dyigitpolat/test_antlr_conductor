@@ -7,16 +7,16 @@ import { RustVisitor } from './parser/src/RustVisitor';
 
 class RustEvaluatorVisitor extends AbstractParseTreeVisitor<number> implements RustVisitor<number> {
     // Visit a parse tree produced by SimpleLangParser#prog
-    visitProg(ctx: ProgramContext): number {
-        return this.visitStatement(ctx.statement(0));
+    visitProgram(ctx: ProgramContext): number {
+        return this.visit(ctx.statement(0));
     }
 
     visitStatement(ctx: StatementContext) {
-        return this.visitExpressionStatement(ctx.expressionStatement());
+        return this.visit(ctx.expressionStatement());
     }
 
     visitExpressionStatement(ctx: ExpressionStatementContext) {
-        return this.visitExpression(ctx.expression());
+        return this.visit(ctx.expression());
     }
     
     // Visit a parse tree produced by SimpleLangParser#expression
@@ -86,7 +86,7 @@ export class RustEvaluator extends BasicEvaluator {
             const tree = parser.program();
             
             // Evaluate the parsed tree
-            const result = this.visitor.visitProg(tree);
+            const result = this.visitor.visit(tree);
             
             // Send the result to the REPL
             this.conductor.sendOutput(`Result of expression: ${result}`);
