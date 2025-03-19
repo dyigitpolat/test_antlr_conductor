@@ -53,10 +53,10 @@ functionDeclaration: FN IDENT LPAREN RPAREN LBRACE statement* RBRACE;
 // expressionStatement: expression SEMI;
 
 expression:
-      NUMBER SEMI
-    | IDENT SEMI
-    | expression (PLUS | MINUS | STAR | SLASH) expression SEMI
-    | LPAREN expression RPAREN SEMI
+      NUMBER 
+    | IDENT 
+    | expression (PLUS | MINUS | STAR | SLASH) expression 
+    | LPAREN expression RPAREN
     ;
 
 ifStatement: IF LPAREN expression RPAREN LBRACE statement* RBRACE (ELSE LBRACE statement* RBRACE)?;
