@@ -39,7 +39,7 @@ program: statement* EOF;
 statement:
       variableDeclaration
     | functionDeclaration
-    | expression
+    | expressionStatement
     | ifStatement
     | whileLoop
     | loopStatement
@@ -50,7 +50,7 @@ variableDeclaration: LET IDENT ASSIGN expression SEMI;
 
 functionDeclaration: FN IDENT LPAREN RPAREN LBRACE statement* RBRACE;
 
-// expressionStatement: expression SEMI;
+expressionStatement: expression SEMI;
 
 expression:
       NUMBER 

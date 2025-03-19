@@ -7,6 +7,7 @@ import { ProgramContext } from "./RustParser.js";
 import { StatementContext } from "./RustParser.js";
 import { VariableDeclarationContext } from "./RustParser.js";
 import { FunctionDeclarationContext } from "./RustParser.js";
+import { ExpressionStatementContext } from "./RustParser.js";
 import { ExpressionContext } from "./RustParser.js";
 import { IfStatementContext } from "./RustParser.js";
 import { WhileLoopContext } from "./RustParser.js";
@@ -46,6 +47,12 @@ export class RustVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      * @return the visitor result
      */
     visitFunctionDeclaration?: (ctx: FunctionDeclarationContext) => Result;
+    /**
+     * Visit a parse tree produced by `RustParser.expressionStatement`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitExpressionStatement?: (ctx: ExpressionStatementContext) => Result;
     /**
      * Visit a parse tree produced by `RustParser.expression`.
      * @param ctx the parse tree
