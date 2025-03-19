@@ -50,7 +50,7 @@ class RustEvaluatorVisitor extends AbstractParseTreeVisitor<number> implements R
 
     // Override the default result method from AbstractParseTreeVisitor
     protected defaultResult(): number {
-        return 0;
+        return 101;
     }
     
     // Override the aggregate result method
