@@ -81,7 +81,9 @@ expression:
     ;
 
 // Function call
-functionCall: IDENT LPAREN arguments? RPAREN;
+functionCall: functionName LPAREN arguments? RPAREN;
+
+functionName: IDENT;
 
 arguments: expression (COMMA expression)*;
 

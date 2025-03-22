@@ -1,6 +1,6 @@
 import { AbstractParseTreeVisitor, CharStream, CommonTokenStream, ParseTree } from "antlr4ng";
 import { RustVisitor } from "./parser/src/RustVisitor";
-import { BlockStatementContext, ConstantDeclarationContext, ExpressionContext, ExpressionStatementContext, FunctionCallContext, FunctionDeclarationContext, IfStatementContext, ParametersContext, ProgramContext, ReturnStatementContext, RustParser, StatementContext, VariableDeclarationContext, WhileLoopContext } from "./parser/src/RustParser";
+import { BlockStatementContext, ConstantDeclarationContext, ExpressionContext, ExpressionStatementContext, FunctionCallContext, FunctionDeclarationContext, FunctionNameContext, IfStatementContext, ParametersContext, ProgramContext, ReturnStatementContext, RustParser, StatementContext, VariableDeclarationContext, WhileLoopContext } from "./parser/src/RustParser";
 
 type Instruction = {
     tag: string
@@ -75,7 +75,7 @@ class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVis
     public visitFunctionDeclaration(ctx: FunctionDeclarationContext): void {
         this.instrs[this.wc++] = {
             tag: 'LDF',
-            arity: this.countArity(ctx.parameters()),
+            syms: ctx.parameters().IDENT().map(node => node.getText()),
             addr: this.wc + 1
         }
         const goto_instruction = {tag: 'GOTO'}
@@ -162,8 +162,12 @@ class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVis
         }
     }
 
+    public visitFunctionName(ctx: FunctionNameContext): void {
+        this.instrs[this.wc++] = {tag: "LD", sym: ctx.IDENT().getText()};
+    }
+
     public visitFunctionCall(ctx: FunctionCallContext): void {
-        this.visit(ctx.IDENT());
+        this.visit(ctx.getChild(0));
         const args = ctx.arguments().expression();
         for (let expr of args) {
             this.visit(expr);

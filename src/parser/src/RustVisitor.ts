@@ -15,6 +15,7 @@ import { BlockStatementContext } from "./RustParser.js";
 import { ExpressionStatementContext } from "./RustParser.js";
 import { ExpressionContext } from "./RustParser.js";
 import { FunctionCallContext } from "./RustParser.js";
+import { FunctionNameContext } from "./RustParser.js";
 import { ArgumentsContext } from "./RustParser.js";
 import { WhileLoopContext } from "./RustParser.js";
 import { IfStatementContext } from "./RustParser.js";
@@ -103,6 +104,12 @@ export class RustVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      * @return the visitor result
      */
     visitFunctionCall?: (ctx: FunctionCallContext) => Result;
+    /**
+     * Visit a parse tree produced by `RustParser.functionName`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitFunctionName?: (ctx: FunctionNameContext) => Result;
     /**
      * Visit a parse tree produced by `RustParser.arguments`.
      * @param ctx the parse tree

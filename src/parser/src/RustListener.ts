@@ -15,6 +15,7 @@ import { BlockStatementContext } from "./RustParser.js";
 import { ExpressionStatementContext } from "./RustParser.js";
 import { ExpressionContext } from "./RustParser.js";
 import { FunctionCallContext } from "./RustParser.js";
+import { FunctionNameContext } from "./RustParser.js";
 import { ArgumentsContext } from "./RustParser.js";
 import { WhileLoopContext } from "./RustParser.js";
 import { IfStatementContext } from "./RustParser.js";
@@ -148,6 +149,16 @@ export class RustListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitFunctionCall?: (ctx: FunctionCallContext) => void;
+    /**
+     * Enter a parse tree produced by `RustParser.functionName`.
+     * @param ctx the parse tree
+     */
+    enterFunctionName?: (ctx: FunctionNameContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.functionName`.
+     * @param ctx the parse tree
+     */
+    exitFunctionName?: (ctx: FunctionNameContext) => void;
     /**
      * Enter a parse tree produced by `RustParser.arguments`.
      * @param ctx the parse tree
