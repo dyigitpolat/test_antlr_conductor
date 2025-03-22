@@ -75,7 +75,7 @@ expression:
     | functionCall
     | expression (STAR | SLASH) expression
     | expression (PLUS | MINUS) expression 
-    | expression (EQ | GEQ | GT | LT | LET) expression
+    | expression (EQ | GEQ | GT | LT | LEQ | NEQ) expression
     | (MINUS | NOT) expression
     | LPAREN expression RPAREN
     ;
