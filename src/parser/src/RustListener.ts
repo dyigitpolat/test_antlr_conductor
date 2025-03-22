@@ -5,13 +5,21 @@ import { ErrorNode, ParseTreeListener, ParserRuleContext, TerminalNode } from "a
 
 import { ProgramContext } from "./RustParser.js";
 import { StatementContext } from "./RustParser.js";
-import { VariableDeclarationContext } from "./RustParser.js";
 import { FunctionDeclarationContext } from "./RustParser.js";
+import { ParametersContext } from "./RustParser.js";
+import { ReturnTypeContext } from "./RustParser.js";
+import { ConstantDeclarationContext } from "./RustParser.js";
+import { VariableDeclarationContext } from "./RustParser.js";
+import { TypeAnnotationContext } from "./RustParser.js";
+import { BlockStatementContext } from "./RustParser.js";
 import { ExpressionStatementContext } from "./RustParser.js";
 import { ExpressionContext } from "./RustParser.js";
-import { IfStatementContext } from "./RustParser.js";
+import { FunctionCallContext } from "./RustParser.js";
+import { ArgumentsContext } from "./RustParser.js";
 import { WhileLoopContext } from "./RustParser.js";
-import { LoopStatementContext } from "./RustParser.js";
+import { IfStatementContext } from "./RustParser.js";
+import { ConseqStatementContext } from "./RustParser.js";
+import { AltStatementContext } from "./RustParser.js";
 import { ReturnStatementContext } from "./RustParser.js";
 
 
@@ -41,6 +49,46 @@ export class RustListener implements ParseTreeListener {
      */
     exitStatement?: (ctx: StatementContext) => void;
     /**
+     * Enter a parse tree produced by `RustParser.functionDeclaration`.
+     * @param ctx the parse tree
+     */
+    enterFunctionDeclaration?: (ctx: FunctionDeclarationContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.functionDeclaration`.
+     * @param ctx the parse tree
+     */
+    exitFunctionDeclaration?: (ctx: FunctionDeclarationContext) => void;
+    /**
+     * Enter a parse tree produced by `RustParser.parameters`.
+     * @param ctx the parse tree
+     */
+    enterParameters?: (ctx: ParametersContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.parameters`.
+     * @param ctx the parse tree
+     */
+    exitParameters?: (ctx: ParametersContext) => void;
+    /**
+     * Enter a parse tree produced by `RustParser.returnType`.
+     * @param ctx the parse tree
+     */
+    enterReturnType?: (ctx: ReturnTypeContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.returnType`.
+     * @param ctx the parse tree
+     */
+    exitReturnType?: (ctx: ReturnTypeContext) => void;
+    /**
+     * Enter a parse tree produced by `RustParser.constantDeclaration`.
+     * @param ctx the parse tree
+     */
+    enterConstantDeclaration?: (ctx: ConstantDeclarationContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.constantDeclaration`.
+     * @param ctx the parse tree
+     */
+    exitConstantDeclaration?: (ctx: ConstantDeclarationContext) => void;
+    /**
      * Enter a parse tree produced by `RustParser.variableDeclaration`.
      * @param ctx the parse tree
      */
@@ -51,15 +99,25 @@ export class RustListener implements ParseTreeListener {
      */
     exitVariableDeclaration?: (ctx: VariableDeclarationContext) => void;
     /**
-     * Enter a parse tree produced by `RustParser.functionDeclaration`.
+     * Enter a parse tree produced by `RustParser.typeAnnotation`.
      * @param ctx the parse tree
      */
-    enterFunctionDeclaration?: (ctx: FunctionDeclarationContext) => void;
+    enterTypeAnnotation?: (ctx: TypeAnnotationContext) => void;
     /**
-     * Exit a parse tree produced by `RustParser.functionDeclaration`.
+     * Exit a parse tree produced by `RustParser.typeAnnotation`.
      * @param ctx the parse tree
      */
-    exitFunctionDeclaration?: (ctx: FunctionDeclarationContext) => void;
+    exitTypeAnnotation?: (ctx: TypeAnnotationContext) => void;
+    /**
+     * Enter a parse tree produced by `RustParser.blockStatement`.
+     * @param ctx the parse tree
+     */
+    enterBlockStatement?: (ctx: BlockStatementContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.blockStatement`.
+     * @param ctx the parse tree
+     */
+    exitBlockStatement?: (ctx: BlockStatementContext) => void;
     /**
      * Enter a parse tree produced by `RustParser.expressionStatement`.
      * @param ctx the parse tree
@@ -81,15 +139,25 @@ export class RustListener implements ParseTreeListener {
      */
     exitExpression?: (ctx: ExpressionContext) => void;
     /**
-     * Enter a parse tree produced by `RustParser.ifStatement`.
+     * Enter a parse tree produced by `RustParser.functionCall`.
      * @param ctx the parse tree
      */
-    enterIfStatement?: (ctx: IfStatementContext) => void;
+    enterFunctionCall?: (ctx: FunctionCallContext) => void;
     /**
-     * Exit a parse tree produced by `RustParser.ifStatement`.
+     * Exit a parse tree produced by `RustParser.functionCall`.
      * @param ctx the parse tree
      */
-    exitIfStatement?: (ctx: IfStatementContext) => void;
+    exitFunctionCall?: (ctx: FunctionCallContext) => void;
+    /**
+     * Enter a parse tree produced by `RustParser.arguments`.
+     * @param ctx the parse tree
+     */
+    enterArguments?: (ctx: ArgumentsContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.arguments`.
+     * @param ctx the parse tree
+     */
+    exitArguments?: (ctx: ArgumentsContext) => void;
     /**
      * Enter a parse tree produced by `RustParser.whileLoop`.
      * @param ctx the parse tree
@@ -101,15 +169,35 @@ export class RustListener implements ParseTreeListener {
      */
     exitWhileLoop?: (ctx: WhileLoopContext) => void;
     /**
-     * Enter a parse tree produced by `RustParser.loopStatement`.
+     * Enter a parse tree produced by `RustParser.ifStatement`.
      * @param ctx the parse tree
      */
-    enterLoopStatement?: (ctx: LoopStatementContext) => void;
+    enterIfStatement?: (ctx: IfStatementContext) => void;
     /**
-     * Exit a parse tree produced by `RustParser.loopStatement`.
+     * Exit a parse tree produced by `RustParser.ifStatement`.
      * @param ctx the parse tree
      */
-    exitLoopStatement?: (ctx: LoopStatementContext) => void;
+    exitIfStatement?: (ctx: IfStatementContext) => void;
+    /**
+     * Enter a parse tree produced by `RustParser.conseqStatement`.
+     * @param ctx the parse tree
+     */
+    enterConseqStatement?: (ctx: ConseqStatementContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.conseqStatement`.
+     * @param ctx the parse tree
+     */
+    exitConseqStatement?: (ctx: ConseqStatementContext) => void;
+    /**
+     * Enter a parse tree produced by `RustParser.altStatement`.
+     * @param ctx the parse tree
+     */
+    enterAltStatement?: (ctx: AltStatementContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.altStatement`.
+     * @param ctx the parse tree
+     */
+    exitAltStatement?: (ctx: AltStatementContext) => void;
     /**
      * Enter a parse tree produced by `RustParser.returnStatement`.
      * @param ctx the parse tree

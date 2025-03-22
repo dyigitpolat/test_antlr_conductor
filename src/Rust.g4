@@ -2,12 +2,16 @@ grammar Rust;
 
 // Keywords
 LET: 'let';
+CONST: 'const';
 FN: 'fn';
 IF: 'if';
 ELSE: 'else';
 RETURN: 'return';
 WHILE: 'while';
 LOOP: 'loop';
+BOOL: 'true' | 'false';
+TYPE: 'num' | 'bool';
+MUT: 'mut';
 
 // Operators and Symbols
 ASSIGN: '=';
@@ -28,6 +32,8 @@ LT: '<';
 GT: '>';
 LEQ: '<=';
 GEQ: '>=';
+NOT: '!';
+ARROW: '->';
 
 // Identifiers and Literals
 IDENT: [a-zA-Z_][a-zA-Z0-9_]*;
@@ -37,32 +43,57 @@ WHITESPACE: [ \t\r\n]+ -> skip; // Ignore whitespace
 program: statement* EOF;
 
 statement:
-      variableDeclaration
+      constantDeclaration
+    | variableDeclaration
     | functionDeclaration
     | expressionStatement
+    | blockStatement
     | ifStatement
     | whileLoop
-    | loopStatement
-    | returnStatement
     ;
 
-variableDeclaration: LET IDENT ASSIGN expression SEMI;
+functionDeclaration: FN IDENT LPAREN parameters? RPAREN returnType? blockStatement SEMI;
 
-functionDeclaration: FN IDENT LPAREN RPAREN LBRACE statement* RBRACE;
+parameters: IDENT COLON TYPE (COMMA IDENT COLON TYPE)*;
+
+returnType: ARROW TYPE;
+
+constantDeclaration: CONST IDENT typeAnnotation? ASSIGN expression SEMI;
+
+variableDeclaration: LET IDENT typeAnnotation? ASSIGN expression SEMI;
+
+typeAnnotation: COLON TYPE;
+
+blockStatement: LBRACE statement* RBRACE;
 
 expressionStatement: expression SEMI;
 
 expression:
       NUMBER 
+    | BOOL
     | IDENT 
-    | expression (PLUS | MINUS | STAR | SLASH) expression 
+    | functionCall
+    | expression (STAR | SLASH) expression
+    | expression (PLUS | MINUS) expression 
+    | expression (EQ | GEQ | GT | LT | LET) expression
+    | (MINUS | NOT) expression
     | LPAREN expression RPAREN
     ;
 
-ifStatement: IF LPAREN expression RPAREN LBRACE statement* RBRACE (ELSE LBRACE statement* RBRACE)?;
+// Function call
+functionCall: IDENT LPAREN arguments? RPAREN;
 
-whileLoop: WHILE LPAREN expression RPAREN LBRACE statement* RBRACE;
+arguments: expression (COMMA expression)*;
 
-loopStatement: LOOP LBRACE statement* RBRACE;
+// while loop
+whileLoop: WHILE expression blockStatement;
 
+// If statement
+ifStatement: IF expression conseqStatement (ELSE altStatement)?;
+
+conseqStatement: blockStatement;
+
+altStatement: blockStatement;
+
+// return statement
 returnStatement: RETURN expression? SEMI;

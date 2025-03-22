@@ -4,11 +4,25 @@ import { CharStream, CommonTokenStream, AbstractParseTreeVisitor, ParseTree } fr
 import { RustLexer } from './parser/src/RustLexer'
 import { ExpressionContext, ExpressionStatementContext, ProgramContext, RustParser, StatementContext } from './parser/src/RustParser';
 import { RustVisitor } from './parser/src/RustVisitor';
+import RustLangCompiler from './RustLangCompiler';
 
 class RustEvaluatorVisitor extends AbstractParseTreeVisitor<number> implements RustVisitor<number> {
     // Visit a parse tree produced by SimpleLangParser#prog
     visitProgram(ctx: ProgramContext): number {
-        return this.visit(ctx.statement(0));
+        let out = 0;
+        let stmts = ctx.statement();
+        if (stmts !== null) {
+            if (Array.isArray(stmts)) {
+                for (let stmt of stmts) {
+                    out = this.visit(stmt);
+                }
+                return out;
+            } else  {
+                return this.visit(stmts);
+            }
+        } else {
+            return undefined
+        }
     }
 
     visitStatement(ctx: StatementContext) {
@@ -81,15 +95,17 @@ export class RustEvaluator extends BasicEvaluator {
             const lexer = new RustLexer(inputStream);
             const tokenStream = new CommonTokenStream(lexer);
             const parser = new RustParser(tokenStream);
+            const compiler = new RustLangCompiler();
             
             // Parse the input
             const tree = parser.program();
             
             // Evaluate the parsed tree
-            const result = this.visitor.visit(tree);
-            
+            // const result = this.visitor.visit(tree);
+            compiler.visit(tree);
             // Send the result to the REPL
-            this.conductor.sendOutput(`Result of expression: ${result}`);
+            // this.conductor.sendOutput(`Result of expression: ${result}`);
+            this.conductor.sendOutput(`Results of compiled instructions:\n${compiler.beautifiedPrint()}`)
         }  catch (error) {
             // Handle errors and send them to the REPL
             if (error instanceof Error) {
