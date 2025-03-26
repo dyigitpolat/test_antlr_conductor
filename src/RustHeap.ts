@@ -84,3 +84,5 @@ class RustHeap {
         (address, offset, value) => 
         this.heap.getUint16(address * this.word_size + offset)
 }
+
+export default RustHeap;

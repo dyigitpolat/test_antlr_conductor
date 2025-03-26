@@ -14,6 +14,7 @@ import { TypeAnnotationContext } from "./RustParser.js";
 import { BlockStatementContext } from "./RustParser.js";
 import { ExpressionStatementContext } from "./RustParser.js";
 import { ExpressionContext } from "./RustParser.js";
+import { ReturnStatementContext } from "./RustParser.js";
 import { FunctionCallContext } from "./RustParser.js";
 import { FunctionNameContext } from "./RustParser.js";
 import { ArgumentsContext } from "./RustParser.js";
@@ -21,7 +22,6 @@ import { WhileLoopContext } from "./RustParser.js";
 import { IfStatementContext } from "./RustParser.js";
 import { ConseqStatementContext } from "./RustParser.js";
 import { AltStatementContext } from "./RustParser.js";
-import { ReturnStatementContext } from "./RustParser.js";
 
 
 /**
@@ -140,6 +140,16 @@ export class RustListener implements ParseTreeListener {
      */
     exitExpression?: (ctx: ExpressionContext) => void;
     /**
+     * Enter a parse tree produced by `RustParser.returnStatement`.
+     * @param ctx the parse tree
+     */
+    enterReturnStatement?: (ctx: ReturnStatementContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.returnStatement`.
+     * @param ctx the parse tree
+     */
+    exitReturnStatement?: (ctx: ReturnStatementContext) => void;
+    /**
      * Enter a parse tree produced by `RustParser.functionCall`.
      * @param ctx the parse tree
      */
@@ -209,16 +219,6 @@ export class RustListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitAltStatement?: (ctx: AltStatementContext) => void;
-    /**
-     * Enter a parse tree produced by `RustParser.returnStatement`.
-     * @param ctx the parse tree
-     */
-    enterReturnStatement?: (ctx: ReturnStatementContext) => void;
-    /**
-     * Exit a parse tree produced by `RustParser.returnStatement`.
-     * @param ctx the parse tree
-     */
-    exitReturnStatement?: (ctx: ReturnStatementContext) => void;
 
     visitTerminal(node: TerminalNode): void {}
     visitErrorNode(node: ErrorNode): void {}

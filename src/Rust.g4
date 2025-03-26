@@ -50,6 +50,7 @@ statement:
     | blockStatement
     | ifStatement
     | whileLoop
+    | returnStatement
     ;
 
 functionDeclaration: FN IDENT LPAREN parameters? RPAREN returnType? blockStatement SEMI;
@@ -80,6 +81,9 @@ expression:
     | LPAREN expression RPAREN
     ;
 
+// return statement
+returnStatement: RETURN expression? SEMI;
+
 // Function call
 functionCall: functionName LPAREN arguments? RPAREN;
 
@@ -97,5 +101,3 @@ conseqStatement: blockStatement;
 
 altStatement: blockStatement;
 
-// return statement
-returnStatement: RETURN expression? SEMI;

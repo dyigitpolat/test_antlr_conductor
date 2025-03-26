@@ -32,11 +32,19 @@ class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVis
                     const stmt = stmts[i];
                     if (stmt.variableDeclaration()) {
                         out.push(stmt.variableDeclaration().IDENT().getText());
+                    } else if (stmt.functionDeclaration()) {
+                        out.push(stmt.functionDeclaration().IDENT().getText());
+                    } else if (stmt.constantDeclaration()) {
+                        out.push(stmt.constantDeclaration().IDENT().getText());
                     }
                 }
             } else {
                 if (stmts.variableDeclaration()) {
                     out.push(stmts.variableDeclaration().IDENT().getText()); 
+                } else if (stmts.functionDeclaration()) {
+                    out.push(stmts.functionDeclaration().IDENT().getText());
+                } else if (stmts.constantDeclaration()) {
+                    out.push(stmts.constantDeclaration().IDENT().getText());
                 }
             }
         }
@@ -78,6 +86,7 @@ class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVis
             syms: ctx.parameters().IDENT().map(node => node.getText()),
             addr: this.wc + 1
         }
+        
         const goto_instruction = {tag: 'GOTO'}
         this.instrs[this.wc++] = goto_instruction
         // extend compile-time environment
@@ -104,6 +113,8 @@ class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVis
 
     public visitBlockStatement(ctx: BlockStatementContext): void {
         const locals = this.scan_declarations(ctx.statement());
+        console.log(locals.length > 0);
+
         this.instrs[this.wc++] = {tag: "ENTER_SCOPE", syms: locals}
         const stmts = ctx.statement();
         this.handleStatements(stmts)
@@ -118,7 +129,8 @@ class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVis
         const goto_instr = {"tag": "GOTO"};
         this.instrs[this.wc++] = goto_instr;
         jump_on_false_instr["addr"] = this.wc;
-        this.visit(ctx.altStatement());
+        if (ctx.altStatement())
+            this.visit(ctx.altStatement());
         goto_instr["addr"] = this.wc;
     }
 

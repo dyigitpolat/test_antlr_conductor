@@ -5,6 +5,7 @@ import { RustLexer } from './parser/src/RustLexer'
 import { ExpressionContext, ExpressionStatementContext, ProgramContext, RustParser, StatementContext } from './parser/src/RustParser';
 import { RustVisitor } from './parser/src/RustVisitor';
 import RustLangCompiler from './RustLangCompiler';
+import RustIdealizedVM from "./RustIdealizedVM";
 
 class RustEvaluatorVisitor extends AbstractParseTreeVisitor<number> implements RustVisitor<number> {
     // Visit a parse tree produced by SimpleLangParser#prog
@@ -91,11 +92,12 @@ export class RustEvaluator extends BasicEvaluator {
         this.executionCount++;
         try {
             // Create the lexer and parser
-            const inputStream = CharStream.fromString(chunk);
+            const inputStream = CharStream.fromString(`{${chunk}}`);
             const lexer = new RustLexer(inputStream);
             const tokenStream = new CommonTokenStream(lexer);
             const parser = new RustParser(tokenStream);
             const compiler = new RustLangCompiler();
+            
             
             // Parse the input
             const tree = parser.program();
@@ -103,9 +105,10 @@ export class RustEvaluator extends BasicEvaluator {
             // Evaluate the parsed tree
             // const result = this.visitor.visit(tree);
             compiler.visit(tree);
+            const idealizedVM = new RustIdealizedVM(compiler.getInstructions());
             // Send the result to the REPL
-            // this.conductor.sendOutput(`Result of expression: ${result}`);
             this.conductor.sendOutput(`Results of compiled instructions:\n${compiler.beautifiedPrint()}`)
+            this.conductor.sendOutput(`Result of idealized VM: \n${idealizedVM.execute()}`)
         }  catch (error) {
             // Handle errors and send them to the REPL
             if (error instanceof Error) {
