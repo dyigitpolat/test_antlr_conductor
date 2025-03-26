@@ -1,6 +1,6 @@
 import { AbstractParseTreeVisitor, CharStream, CommonTokenStream, ParseTree } from "antlr4ng";
 import { RustVisitor } from "./parser/src/RustVisitor";
-import { BlockStatementContext, ConstantDeclarationContext, ExpressionContext, ExpressionStatementContext, FunctionCallContext, FunctionDeclarationContext, FunctionNameContext, IfStatementContext, ParametersContext, ProgramContext, ReturnStatementContext, RustParser, StatementContext, VariableDeclarationContext, WhileLoopContext } from "./parser/src/RustParser";
+import { BlockStatementContext, ConstantDeclarationContext, ExpressionContext, ExpressionStatementContext, FunctionCallContext, FunctionDeclarationContext, FunctionNameContext, IfStatementContext, ParametersContext, ProgramContext, ReturnStatementContext, RustParser, StatementContext, VariableAssignmentContext, VariableDeclarationContext, WhileLoopContext } from "./parser/src/RustParser";
 
 export type Instruction = {
     tag: string
@@ -194,6 +194,11 @@ class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVis
         } else {
             this.instrs[this.wc++] = {tag: "RESET"};
         }
+    }
+
+    public visitVariableAssignment(ctx: VariableAssignmentContext) {
+        this.visit(ctx.expression());
+        this.instrs[this.wc++] = { tag: "ASSIGN", sym: ctx.IDENT().getText() };
     }
 }
 

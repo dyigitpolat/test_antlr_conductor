@@ -39,6 +39,8 @@ ARROW: '->';
 IDENT: [a-zA-Z_][a-zA-Z0-9_]*;
 NUMBER: [0-9]+;
 WHITESPACE: [ \t\r\n]+ -> skip; // Ignore whitespace
+LINE_COMMENT : '//' ~[\r\n]* -> skip ;  // Single-line comments
+BLOCK_COMMENT : '/*' .*? '*/' -> skip ; // Multi-line comments (non-greedy)
 
 program: statement* EOF;
 
@@ -46,6 +48,7 @@ statement:
       constantDeclaration
     | variableDeclaration
     | functionDeclaration
+    | variableAssignment
     | expressionStatement
     | blockStatement
     | ifStatement
@@ -54,6 +57,8 @@ statement:
     ;
 
 functionDeclaration: FN IDENT LPAREN parameters? RPAREN returnType? blockStatement SEMI;
+
+variableAssignment: IDENT ASSIGN expression SEMI;
 
 parameters: IDENT COLON TYPE (COMMA IDENT COLON TYPE)*;
 
