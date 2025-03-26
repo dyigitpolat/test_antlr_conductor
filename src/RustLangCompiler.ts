@@ -2,7 +2,7 @@ import { AbstractParseTreeVisitor, CharStream, CommonTokenStream, ParseTree } fr
 import { RustVisitor } from "./parser/src/RustVisitor";
 import { BlockStatementContext, ConstantDeclarationContext, ExpressionContext, ExpressionStatementContext, FunctionCallContext, FunctionDeclarationContext, FunctionNameContext, IfStatementContext, ParametersContext, ProgramContext, ReturnStatementContext, RustParser, StatementContext, VariableDeclarationContext, WhileLoopContext } from "./parser/src/RustParser";
 
-type Instruction = {
+export type Instruction = {
     tag: string
     sym?: string
     val?: string | number | boolean | undefined
