@@ -1,5 +1,6 @@
 import { Instruction } from "./RustLangCompiler";
 import RustHeap from "./RustHeap";
+import { Tag } from "./RustHeap";
 
 class RustIdealizedVM {
     private E = [{}];
@@ -8,6 +9,135 @@ class RustIdealizedVM {
     private instrs: Instruction[];
     private PC: number = 0;
     private unassigned = () => { };
+
+    private HEAP = new RustHeap(100000);
+    private False = this.HEAP.heap_allocate(Tag.False_tag, 1)
+    private is_False = address => this.HEAP.heap_get_tag(address) === Tag.False_tag
+    private True = this.HEAP.heap_allocate(Tag.True_tag, 1)
+    private is_True = address => this.HEAP.heap_get_tag(address) === Tag.True_tag
+    private is_Boolean = address => this.is_True(address) || this.is_False(address)
+    private Unassigned = this.HEAP.heap_allocate(Tag.Unassigned_tag, 1)
+    private is_Unassigned = address => this.HEAP.heap_get_tag(address) === Tag.Unassigned_tag
+    private Undefined = this.HEAP.heap_allocate(Tag.Undefined_tag, 1)
+    private is_Undefined = address => this.HEAP.heap_get_tag(address) === Tag.Undefined_tag
+
+    // closure
+    // [1 byte tag, 1 byte arity, 2 bytes pc, 1 byte unused, 
+    //  2 bytes #children, 1 byte unused] 
+    // followed by the address of env
+    // note: currently bytes at offset 4 and 7 are not used;
+    //   they could be used to increase pc and #children range
+
+    private heap_allocate_Closure = (arity, pc, env) => {
+        const address = this.HEAP.heap_allocate(Tag.Closure_tag, 2)
+        this.HEAP.heap_set_byte_at_offset(address, 1, arity)
+        this.HEAP.heap_set_2_bytes_at_offset(address, 2, pc)
+        this.HEAP.heap_set(address + 1, env)
+        return address
+    }
+
+    private heap_get_Closure_arity = address => this.HEAP.heap_get_byte_at_offset(address, 1);
+
+    private heap_get_Closure_pc = address => this.HEAP.heap_get_2_bytes_at_offset(address, 2);
+
+    private heap_get_Closure_environment = address => this.HEAP.heap_get_child(address, 0);
+
+    private is_Closure = address => this.HEAP.heap_get_tag(address) === Tag.Closure_tag;
+
+    // block frame 
+    // [1 byte tag, 4 bytes unused, 
+    //  2 bytes #children, 1 byte unused] 
+
+    private heap_allocate_Blockframe = (env) => {
+        const address = this.HEAP.heap_allocate(Tag.Blockframe_tag, 2)
+        this.HEAP.heap_set(address + 1, env)
+        return address
+    }
+
+    private heap_get_Blockframe_environment = address => this.HEAP.heap_get_child(address, 0)
+
+    private is_Blockframe = address => this.HEAP.heap_get_tag(address) === Tag.Blockframe_tag
+
+    // call frame 
+    // [1 byte tag, 1 byte unused, 2 bytes pc, 
+    //  1 byte unused, 2 bytes #children, 1 byte unused] 
+    // followed by the address of env
+
+    private heap_allocate_Callframe = (env, pc) => {
+        const address = this.HEAP.heap_allocate(Tag.Callframe_tag, 2)
+        this.HEAP.heap_set_2_bytes_at_offset(address, 2, pc)
+        this.HEAP.heap_set(address + 1, env)
+        return address
+    }
+
+    
+    private heap_get_Callframe_environment = address => this.HEAP.heap_get_child(address, 0)
+
+    private heap_get_Callframe_pc = address => this.HEAP.heap_get_2_bytes_at_offset(address, 2)
+
+    private is_Callframe = address => this.HEAP.heap_get_tag(address) === Tag.Callframe_tag
+
+    // environment frame
+    // [1 byte tag, 4 bytes unused, 
+    //  2 bytes #children, 1 byte unused] 
+    // followed by the addresses of its values
+
+    private heap_allocate_Frame = number_of_values => this.HEAP.heap_allocate(Tag.Frame_tag, number_of_values + 1)
+        
+    // environment
+    // [1 byte tag, 4 bytes unused, 
+    //  2 bytes #children, 1 byte unused] 
+    // followed by the addresses of its frames
+
+    private heap_allocate_Environment = number_of_frames => this.HEAP.heap_allocate(Tag.Environment_tag, number_of_frames + 1)
+
+    private heap_empty_Environment = this.heap_allocate_Environment(0)
+
+    // access environment given by address 
+    // using a "position", i.e. a pair of 
+    // frame index and value index
+    private heap_get_Environment_value = 
+    (env_address, position) => {
+        const [frame_index, value_index] = position
+        const frame_address =
+            this.HEAP.heap_get_child(env_address, frame_index)
+        return this.HEAP.heap_get_child(
+                   frame_address, value_index)
+    }
+
+    private heap_set_Environment_value =
+    (env_address, position, value) => {
+        //display(env_address, "env_address:")
+        const [frame_index, value_index] = position
+        const frame_address =
+            this.HEAP.heap_get_child(env_address, frame_index)
+        this.HEAP.heap_set_child(
+            frame_address, value_index, value)
+    }
+
+    // extend a given environment by a new frame: 
+    // create a new environment that is bigger by 1
+    // frame slot than the given environment.
+    // copy the frame Addresses of the given 
+    // environment to the new environment.
+    // enter the address of the new frame to end 
+    // of the new environment
+    private heap_Environment_extend =
+    (frame_address, env_address) => {
+        const old_size = 
+            this.HEAP.heap_get_size(env_address)
+        const new_env_address =
+            this.heap_allocate_Environment(old_size)
+        let i
+        for (i = 0; i < old_size - 1; i++) {
+            this.HEAP.heap_set_child(
+                new_env_address, i,
+                this.HEAP.heap_get_child(env_address, i))
+        }
+        this.HEAP.heap_set_child(new_env_address, i, frame_address)
+        return new_env_address
+    }
+
 
     public constructor(instrs: Instruction[]) {
         this.instrs = instrs

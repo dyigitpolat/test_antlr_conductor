@@ -1,4 +1,4 @@
-enum Tag {
+export enum Tag {
     False_tag          = 0,
     True_tag           = 1,
     Number_tag         = 2,
@@ -73,7 +73,7 @@ class RustHeap {
         this.heap.setUint8(address * this.word_size + offset, value)
         
     public heap_get_byte_at_offset =
-        (address, offset, value) => 
+        (address, offset) => 
         this.heap.getUint8(address * this.word_size + offset)
     
     public heap_set_2_bytes_at_offset =
@@ -81,7 +81,7 @@ class RustHeap {
         this.heap.setUint16(address * this.word_size + offset, value)
         
     public heap_get_2_bytes_at_offset =
-        (address, offset, value) => 
+        (address, offset) => 
         this.heap.getUint16(address * this.word_size + offset)
 }
 
