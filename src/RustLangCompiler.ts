@@ -9,13 +9,39 @@ export type Instruction = {
     syms?: string[]
     addr?: number
     arity?: number
+    pos?: number[]
 }
 
 class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVisitor<void> {
     private wc: number = 0;
     private instrs: Instruction[] = [];
+    private compile_time_environment = [] // compile-time frames only need symbols, each environment is an array
 
-    public beautifiedPrint() : string {
+    private value_index(frame, x) {
+        for (let i = 0; i < frame.length; i++) {
+            if (frame[i] === x)
+                return i;
+        }
+        return -1;
+    }
+
+    private compile_time_environment_position(env, x) {
+        let last_ind = env.length - 1;
+        while (this.value_index(env[last_ind], x) === -1) {
+            last_ind--;
+        }
+        return [last_ind, this.value_index(env[last_ind], x)]
+    }
+
+    private compile_time_environment_extend(vs: any[], e: any[]): any[] {
+        let res = [...e];
+        if (vs.length > 0) {
+            res.push(vs);
+        }
+        return res;
+    }
+
+    public beautifiedPrint(): string {
         let out = "";
         for (let i = 0; i < this.instrs.length; i++) {
             let instr = this.instrs[i];
@@ -24,7 +50,7 @@ class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVis
         return out;
     }
 
-    private scan_declarations(stmts: StatementContext | StatementContext[] | null): string[] {   
+    private scan_declarations(stmts: StatementContext | StatementContext[] | null): string[] {
         let out = []
         if (stmts !== null) {
             if (Array.isArray(stmts)) {
@@ -40,7 +66,7 @@ class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVis
                 }
             } else {
                 if (stmts.variableDeclaration()) {
-                    out.push(stmts.variableDeclaration().IDENT().getText()); 
+                    out.push(stmts.variableDeclaration().IDENT().getText());
                 } else if (stmts.functionDeclaration()) {
                     out.push(stmts.functionDeclaration().IDENT().getText());
                 } else if (stmts.constantDeclaration()) {
@@ -66,7 +92,7 @@ class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVis
         }
     }
 
-    private countArity(parameters: ParametersContext) : number {
+    private countArity(parameters: ParametersContext): number {
         return parameters.IDENT().length;
     }
 
@@ -81,30 +107,51 @@ class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVis
     }
 
     public visitFunctionDeclaration(ctx: FunctionDeclarationContext): void {
+        let params = ctx.parameters().IDENT().map(node => node.getText());
+        let current_ce = this.compile_time_environment;
+
         this.instrs[this.wc++] = {
             tag: 'LDF',
-            syms: ctx.parameters().IDENT().map(node => node.getText()),
+            syms: params,
             addr: this.wc + 1
         }
-        
-        const goto_instruction = {tag: 'GOTO'}
+
+        const goto_instruction = { tag: 'GOTO' }
         this.instrs[this.wc++] = goto_instruction
         // extend compile-time environment
+        this.compile_time_environment = this.compile_time_environment_extend(params, current_ce);
         this.visit(ctx.blockStatement());
-        this.instrs[this.wc++] = {tag: 'LDC', val: undefined}
-        this.instrs[this.wc++] = {tag: 'RESET'}
+        this.instrs[this.wc++] = { tag: 'LDC', val: undefined }
+        this.instrs[this.wc++] = { tag: 'RESET' }
         goto_instruction["addr"] = this.wc;
-        this.instrs[this.wc++] = {tag: "ASSIGN", sym: ctx.IDENT().getText()};
+        this.compile_time_environment = current_ce;
+
+        let function_name = ctx.IDENT().getText();
+        this.instrs[this.wc++] = {
+            tag: "ASSIGN",
+            sym: function_name,
+            pos: this.compile_time_environment_position(this.compile_time_environment, function_name)
+        };
     }
 
     public visitConstantDeclaration(ctx: ConstantDeclarationContext): void {
         this.visit(ctx.expression());
-        this.instrs[this.wc++] = {tag: "ASSIGN", sym: ctx.IDENT().getText()}
+        const symbol: string = ctx.IDENT().getText();
+        this.instrs[this.wc++] = {
+            tag: "ASSIGN",
+            sym: symbol,
+            pos: this.compile_time_environment_position(this.compile_time_environment, symbol)
+        };
     }
 
     public visitVariableDeclaration(ctx: VariableDeclarationContext): void {
         this.visit(ctx.expression());
-        this.instrs[this.wc++] = { tag: "ASSIGN", sym: ctx.IDENT().getText() };
+        const symbol: string = ctx.IDENT().getText();
+        this.instrs[this.wc++] = {
+            tag: "ASSIGN",
+            sym: symbol,
+            pos: this.compile_time_environment_position(this.compile_time_environment, symbol)
+        };
     }
 
     public visitExpressionStatement(ctx: ExpressionStatementContext): void {
@@ -113,20 +160,23 @@ class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVis
 
     public visitBlockStatement(ctx: BlockStatementContext): void {
         const locals = this.scan_declarations(ctx.statement());
-        console.log(locals.length > 0);
-
-        this.instrs[this.wc++] = {tag: "ENTER_SCOPE", syms: locals}
+        // console.log(locals.length > 0);
+        let current = this.compile_time_environment
+        this.instrs[this.wc++] = { tag: "ENTER_SCOPE", syms: locals }
+        // Extend current compile_time_environment
+        this.compile_time_environment = this.compile_time_environment_extend(locals, current)
         const stmts = ctx.statement();
         this.handleStatements(stmts)
-        this.instrs[this.wc++] = {tag: "EXIT_SCOPE"};
+        this.instrs[this.wc++] = { tag: "EXIT_SCOPE" };
+        this.compile_time_environment = current;
     }
 
     public visitIfStatement(ctx: IfStatementContext): void {
         this.visit(ctx.expression());
-        const jump_on_false_instr = {"tag": "JOF"};
+        const jump_on_false_instr = { "tag": "JOF" };
         this.instrs[this.wc++] = jump_on_false_instr;
         this.visit(ctx.conseqStatement());
-        const goto_instr = {"tag": "GOTO"};
+        const goto_instr = { "tag": "GOTO" };
         this.instrs[this.wc++] = goto_instr;
         jump_on_false_instr["addr"] = this.wc;
         if (ctx.altStatement())
@@ -137,13 +187,13 @@ class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVis
     public visitWhileLoop(ctx: WhileLoopContext) {
         const loop_start = this.wc;
         this.visit(ctx.expression());
-        const jump_on_false_instr = {"tag": "JOF"};
+        const jump_on_false_instr = { "tag": "JOF" };
         this.instrs[this.wc++] = jump_on_false_instr;
         this.visit(ctx.blockStatement());
-        this.instrs[this.wc++] = {tag: 'POP'};
-        this.instrs[this.wc++] = {tag: 'GOTO', addr: loop_start};
+        this.instrs[this.wc++] = { tag: 'POP' };
+        this.instrs[this.wc++] = { tag: 'GOTO', addr: loop_start };
         jump_on_false_instr["addr"] = this.wc;
-        this.instrs[this.wc++] = {tag: 'LDC', val: undefined}
+        this.instrs[this.wc++] = { tag: 'LDC', val: undefined }
     }
 
     public visitExpression(ctx: ExpressionContext): void {
@@ -175,7 +225,12 @@ class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVis
     }
 
     public visitFunctionName(ctx: FunctionNameContext): void {
-        this.instrs[this.wc++] = {tag: "LD", sym: ctx.IDENT().getText()};
+        let symbol: string = ctx.IDENT().getText();
+        this.instrs[this.wc++] = {
+            tag: "LD",
+            sym: symbol,
+            pos: this.compile_time_environment_position(this.compile_time_environment, symbol)
+        };
     }
 
     public visitFunctionCall(ctx: FunctionCallContext): void {
@@ -184,21 +239,26 @@ class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVis
         for (let expr of args) {
             this.visit(expr);
         }
-        this.instrs[this.wc++] = {tag: "CALL", arity: args.length} 
+        this.instrs[this.wc++] = { tag: "CALL", arity: args.length }
     }
-    
+
     public visitReturnStatement(ctx: ReturnStatementContext): void {
         this.visit(ctx.expression());
         if (this.instrs[this.wc - 1].tag === "CALL") {
             this.instrs[this.wc - 1].tag = "TAIL_CALL";
         } else {
-            this.instrs[this.wc++] = {tag: "RESET"};
+            this.instrs[this.wc++] = { tag: "RESET" };
         }
     }
 
     public visitVariableAssignment(ctx: VariableAssignmentContext) {
         this.visit(ctx.expression());
-        this.instrs[this.wc++] = { tag: "ASSIGN", sym: ctx.IDENT().getText() };
+        let symbol: string = ctx.IDENT().getText();
+        this.instrs[this.wc++] = {
+            tag: "ASSIGN",
+            sym: symbol,
+            pos: this.compile_time_environment_position(this.compile_time_environment, symbol)
+        };
     }
 }
 
