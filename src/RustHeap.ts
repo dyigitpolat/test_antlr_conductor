@@ -20,7 +20,7 @@ class RustHeap {
     private size_offset: number = 5;
     private data: ArrayBuffer;
     private heap: DataView;
-    private free: number = 0;
+    public free: number = 0;
 
     public constructor(bytes: number) {
         this.heap_make(bytes);
@@ -34,7 +34,7 @@ class RustHeap {
         this.heap = new DataView(this.data); 
     }
 
-    public heap_allocate(tag: number, size: number) {
+    public heap_allocate(tag: number, size: number) : number {
         const addr: number = this.free;
         this.free += size;
 

@@ -10,12 +10,13 @@ export type Instruction = {
     addr?: number
     arity?: number
     pos?: number[]
+    num?: number
 }
 
 class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVisitor<void> {
     private wc: number = 0;
     private instrs: Instruction[] = [];
-    private compile_time_environment = [] // compile-time frames only need symbols, each environment is an array
+    private compile_time_environment = [[]]; // compile-time frames only need symbols, each environment is an array
 
     private value_index(frame, x) {
         for (let i = 0; i < frame.length; i++) {
@@ -26,19 +27,20 @@ class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVis
     }
 
     private compile_time_environment_position(env, x) {
-        let last_ind = env.length - 1;
-        while (this.value_index(env[last_ind], x) === -1) {
-            last_ind--;
-        }
+        let last_ind = env.length;
+        while (this.value_index(env[--last_ind], x) === -1) {}
         return [last_ind, this.value_index(env[last_ind], x)]
     }
 
-    private compile_time_environment_extend(vs: any[], e: any[]): any[] {
-        let res = [...e];
-        if (vs.length > 0) {
-            res.push(vs);
+    private push = (array, ...items) => {
+        for (let item of items) {
+            array.push(item);
         }
-        return res;
+        return array;
+    }
+
+    private compile_time_environment_extend(vs: any[], e: any[]): any[] {
+        return this.push([...e], vs);
     }
 
     public beautifiedPrint(): string {
@@ -113,6 +115,7 @@ class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVis
         this.instrs[this.wc++] = {
             tag: 'LDF',
             syms: params,
+            arity: params.length,
             addr: this.wc + 1
         }
 
@@ -162,12 +165,16 @@ class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVis
         const locals = this.scan_declarations(ctx.statement());
         // console.log(locals.length > 0);
         let current = this.compile_time_environment
-        this.instrs[this.wc++] = { tag: "ENTER_SCOPE", syms: locals }
+        if (locals.length > 0) {
+            this.instrs[this.wc++] = { tag: "ENTER_SCOPE", syms: locals, num: locals.length}
+        }
         // Extend current compile_time_environment
         this.compile_time_environment = this.compile_time_environment_extend(locals, current)
         const stmts = ctx.statement();
         this.handleStatements(stmts)
-        this.instrs[this.wc++] = { tag: "EXIT_SCOPE" };
+        if (locals.length > 0) {
+            this.instrs[this.wc++] = { tag: "EXIT_SCOPE" }
+        }
         this.compile_time_environment = current;
     }
 
