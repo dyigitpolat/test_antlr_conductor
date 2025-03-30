@@ -204,7 +204,8 @@ class RustLangCompiler extends AbstractParseTreeVisitor<void> implements RustVis
             } else if (ctx.NUMBER()) {
                 this.instrs[this.wc++] = { tag: "LDC", val: parseFloat(ctx.getChild(0).getText()) };
             } else if (ctx.IDENT()) {
-                this.instrs[this.wc++] = { tag: "LD", sym: ctx.getChild(0).getText() };
+                let symbol = ctx.getChild(0).getText();
+                this.instrs[this.wc++] = { tag: "LD", sym: symbol, pos: this.compile_time_environment_position(this.compile_time_environment, symbol) };
             } else {
                 this.visit(ctx.functionCall());
             }

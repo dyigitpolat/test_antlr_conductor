@@ -3,14 +3,14 @@ import RustHeap from "./RustHeap";
 import { Tag } from "./RustHeap";
 
 class RustIdealizedVM {
-    private E = [{}];
-    private RTS = [];
-    private OS = [];
+    private E = [{}]; // heap Address
+    private RTS = [];  // JS array (stack) of Addresses
+    private OS = []; // JS array (stack) of words (Addresses, word-encoded literals, numbers)
     private instrs: Instruction[];
     private PC: number = 0;
     private unassigned = () => { };
-
     private HEAP = new RustHeap(100000);
+
     private False = this.HEAP.heap_allocate(Tag.False_tag, 1)
     private is_False = address => this.HEAP.heap_get_tag(address) === Tag.False_tag
     private True = this.HEAP.heap_allocate(Tag.True_tag, 1)
@@ -20,6 +20,14 @@ class RustIdealizedVM {
     private is_Unassigned = address => this.HEAP.heap_get_tag(address) === Tag.Unassigned_tag
     private Undefined = this.HEAP.heap_allocate(Tag.Undefined_tag, 1)
     private is_Undefined = address => this.HEAP.heap_get_tag(address) === Tag.Undefined_tag
+    private is_Number = address => 
+    this.HEAP.heap_get_tag(address) === Tag.Number_tag
+
+    private heap_allocate_Number = n => {
+        const number_address = this.HEAP.heap_allocate(Tag.Number_tag, 2)
+        this.HEAP.heap_set(number_address + 1, n)
+        return number_address
+    }
 
     // closure
     // [1 byte tag, 1 byte arity, 2 bytes pc, 1 byte unused, 
@@ -138,6 +146,22 @@ class RustIdealizedVM {
         return new_env_address
     }
 
+    private JS_value_to_address =  x => 
+        x instanceof Boolean
+        ? (x ? this.True : this.False)
+        : x instanceof Number
+        ? this.heap_allocate_Number(x)
+        : "unknown word tag: " + x
+
+    private address_to_JS_value = x => 
+        this.is_Boolean(x)
+        ? (this.is_True(x) ? true : false)
+        : this.is_Number(x)
+        ? this.HEAP.heap_get(x + 1)
+        : this.is_Closure(x)
+        ? "<closure>"
+        : "unknown word tag: " + x
+
 
     public constructor(instrs: Instruction[]) {
         this.instrs = instrs
@@ -156,9 +180,9 @@ class RustIdealizedVM {
         return array;
     }
 
-    private apply_unop = (op, v) => this.unop_microcode[op](v);
+    private apply_unop = (op, v) => this.JS_value_to_address(this.unop_microcode[op](this.address_to_JS_value(v)));
 
-    private apply_binop = (op, v1, v2) => this.binop_microcode[op](v1, v2);
+    private apply_binop = (op, v1, v2) => this.JS_value_to_address(this.binop_microcode[op](this.address_to_JS_value(v1), this.address_to_JS_value(v2)));
 
     private unop_microcode = {
         '-': x => - x,
@@ -221,7 +245,7 @@ class RustIdealizedVM {
         LDC:
             instr => {
                 this.PC++
-                this.push(this.OS, instr.val);
+                this.push(this.OS, this.JS_value_to_address(instr.val));
             },
         UNOP:
             instr => {
