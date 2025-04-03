@@ -10,7 +10,7 @@ RETURN: 'return';
 WHILE: 'while';
 LOOP: 'loop';
 BOOL: 'true' | 'false';
-TYPE: 'num' | 'bool';
+TYPE: 'num' | 'bool' | 'string';
 MUT: 'mut';
 
 // Operators and Symbols
@@ -38,6 +38,7 @@ ARROW: '->';
 // Identifiers and Literals
 IDENT: [a-zA-Z_][a-zA-Z0-9_]*;
 NUMBER: [0-9]+;
+STRING_LITERAL: '"' ( ~["\\\r\n] | '\\' . )* '"';
 WHITESPACE: [ \t\r\n]+ -> skip; // Ignore whitespace
 LINE_COMMENT : '//' ~[\r\n]* -> skip ;  // Single-line comments
 BLOCK_COMMENT : '/*' .*? '*/' -> skip ; // Multi-line comments (non-greedy)
@@ -75,12 +76,13 @@ blockStatement: LBRACE statement* RBRACE;
 expressionStatement: expression SEMI;
 
 expression:
-      NUMBER 
+      NUMBER
     | BOOL
-    | IDENT 
+    | IDENT
+    | STRING_LITERAL
     | functionCall
     | expression (STAR | SLASH) expression
-    | expression (PLUS | MINUS) expression 
+    | expression (PLUS | MINUS) expression
     | expression (EQ | GEQ | GT | LT | LEQ | NEQ) expression
     | (MINUS | NOT) expression
     | LPAREN expression RPAREN
